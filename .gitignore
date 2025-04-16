@@ -1,0 +1,56 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# PyCharm / VS Code IDE
+.idea/
+.vscode/
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Secret files
+*.pem
+*.key
+*.env
+.env.*
+
+# MyPy / Pyright
+.mypy_cache/
+.pyright/
