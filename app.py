@@ -2,17 +2,17 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
-from tkinterdnd2 import *
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import os
 # Create the main window
-root = tk.Tk()
-root.title("Kyber Encryption/Decryption")
+root = TkinterDnD.Tk()
+root.title("File Encryption and Decryption")
 root.geometry("600x600")
 
 # Add the text Drag a file with a file symbol in the main window
-label = ttk.Label(root, text="Drag a File Here")
-label.pack(pady=20)
-label.config(font=("Arial", 30))
+drag_label = ttk.Label(root, text="Drag a File Here")
+drag_label.pack(pady=20)
+drag_label.config(font=("Arial", 30))
 # Add a file symbol right under the text
 file_symbol = ttk.Label(root, text="📁")
 file_symbol.pack()
@@ -25,7 +25,8 @@ def browse_file():
 browse_button = ttk.Button(root, text="Browse Your Computer", command=browse_file)
 browse_button.pack(pady=100)
 def on_drag(event): 
-    file_path = event.data
+    file_path = event.data[1:-1]
+    print(file_path)
     if file_path:
         messagebox.showinfo("File Dragged", f"You dragged: {file_path}")
 # Add encryption and decryption buttons next to each other
@@ -43,9 +44,8 @@ def show_file_path(file_path):
     file_label.pack(pady=10)
     file_label.config(font=("Arial", 15))
 # # Handle the drag and drop using tkinterdnd2
-# root = TkinterDnD.Tk()
-# root.drop_target_register(DND_FILES)
-# root.dnd_bind('<<Drop>>', on_drag)
+drag_label.drop_target_register(DND_FILES)
+drag_label.dnd_bind('<<Drop>>', on_drag)
 # Add a label to show the selected file path
 file_label = ttk.Label(root, text="")
 file_label.pack(pady=10)

@@ -54,3 +54,7 @@ ehthumbs.db
 # MyPy / Pyright
 .mypy_cache/
 .pyright/
+
+
+#tkdnd
+tkdnd*/
