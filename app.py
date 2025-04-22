@@ -4,16 +4,6 @@ from tkinter import messagebox
 from tkinter import filedialog
 from tkinterdnd2 import *
 import os
-# Initialize the TkinterDnD2 library
-TkinterDnD.Tk()
-# Set up the drag and drop functionality
-def on_drop(event):
-    file_path = event.data
-    if os.path.isfile(file_path):
-        file_label.config(text=f"File: {file_path}")
-        messagebox.showinfo("File Dropped", f"You dropped: {file_path}")
-    else:
-        messagebox.showerror("Invalid File", "Please drop a valid file.")
 # Create the main window
 root = tk.Tk()
 root.title("Kyber Encryption/Decryption")
@@ -34,8 +24,7 @@ def browse_file():
         messagebox.showinfo("File Selected", f"You selected: {file_path}")
 browse_button = ttk.Button(root, text="Browse Your Computer", command=browse_file)
 browse_button.pack(pady=100)
-# Manage the drag and drop functionality
-def on_drag(event):
+def on_drag(event): 
     file_path = event.data
     if file_path:
         messagebox.showinfo("File Dragged", f"You dragged: {file_path}")
@@ -53,10 +42,10 @@ def show_file_path(file_path):
     file_label = ttk.Label(root, text=f"Selected File: {file_path}")
     file_label.pack(pady=10)
     file_label.config(font=("Arial", 15))
-# Handle the drag and drop using tkinterdnd2
-root = TkinterDnD.Tk()
-root.drop_target_register(DND_FILES)
-root.dnd_bind('<<Drop>>', on_drag)
+# # Handle the drag and drop using tkinterdnd2
+# root = TkinterDnD.Tk()
+# root.drop_target_register(DND_FILES)
+# root.dnd_bind('<<Drop>>', on_drag)
 # Add a label to show the selected file path
 file_label = ttk.Label(root, text="")
 file_label.pack(pady=10)
