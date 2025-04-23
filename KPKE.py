@@ -71,8 +71,11 @@ class KPKE:
 		a_times_s = self.multiply_2d_with_1d(self.k, a, s)
 		t = [self.add_1d_to_1d(len(e[0]), a_times_s[i], e[i]) for i in range(len(e))]
 
-		ek = [(byte_encode(12, ti) + p) for ti in t]
-		dk = [byte_encode(12, si) for si in s]
+		ek_arr = [(byte_encode(12, ti) + p) for ti in t]
+		dk_arr = [byte_encode(12, si) for si in s]
+
+		ek = b''.join(ek_arr)
+		dk = b''.join(dk_arr)
 		return ek, dk
 
 	# Returns a list of 256 integers
@@ -200,7 +203,7 @@ def bit_array_to_bytes(bit_array):
 def byte_encode(d: int, f: list[int]) -> bytes:
 	for i in range(256):
 		a = f[i]
-		b = [0] * (32 * d)
+		b = [0] * (256 * d)
 		for j in range(d):
 			b[i * d + j] = a % 2
 			a = (a - b[i * d + j]) // 2
