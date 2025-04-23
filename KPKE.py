@@ -71,10 +71,10 @@ class KPKE:
 		a_times_s = self.multiply_2d_with_1d(self.k, a, s)
 		t = [self.add_1d_to_1d(len(e[0]), a_times_s[i], e[i]) for i in range(len(e))]
 
-		ek_arr = [(byte_encode(12, ti) + p) for ti in t]
+		ek_arr = [byte_encode(12, ti) for ti in t]
 		dk_arr = [byte_encode(12, si) for si in s]
 
-		ek = b''.join(ek_arr)
+		ek = b''.join(ek_arr) + p
 		dk = b''.join(dk_arr)
 		return ek, dk
 
@@ -90,7 +90,7 @@ class KPKE:
 			c = xof.read(3)
 			c0, c1, c2 = c[0], c[1], c[2]
 			d1 = (c0 + 256 * (c1 % 16))
-			d2 = c1 // 16 + (16 * (c2 % 16)) % 16
+			d2 = c1 // 16 + (16 * (c2 % 16))
 			
 			if d1 < self.q:
 				a.append(d1)
@@ -141,11 +141,14 @@ class KPKE:
 	def multiply_2d_with_1d(self, k: int, a: list[list[list[int]]], b: list[list[int]]) -> list[list[int]]:
 		# a is a k by k matrix, each element being 256 integers
 		# b is a k by 1 vector, each element being 256 integers
-		c = [None] * k
+		
+		c = []
 		for i in range(k):
+			add = [0] * self.n # 256 integers
 			for j in range(k):
-				c[i] = self.add_1d_to_1d(len(b[i]), a[i][j], b[j])
-
+				times = [(a[i][j][l] * b[j][l]) % self.q for l in range(self.n)]
+				add = self.add_1d_to_1d(self.n, add, times)
+			c.append(add)
 		return c
 	
 	def add_1d_to_1d(self, k: int, a: list[int], b: list[int]) -> list[int]:
@@ -166,8 +169,7 @@ def g(c: bytes) -> tuple[bytes, bytes]:
 def prf(n: int, s: bytes, b: int) -> bytes:
 	xof = SHAKE256.new(s + b.to_bytes(1))
 	output = b''
-	for i in range(64 * n):
-		output += xof.read(8)
+	output = xof.read(64 * n)
 
 	return output
 
