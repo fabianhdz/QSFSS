@@ -78,6 +78,53 @@ class KPKE:
 		dk = b''.join(dk_arr)
 		return ek, dk
 
+	def encrypt(self, ek: bytes, m: bytes, r: bytes) -> bytes:
+		# ek is a 384k+32-byte value
+		# m is a 32-byte value
+		# r is a 32-byte value
+		n = 0
+		t = [self.byte_decode(12, ek[i * 384 : (i + 1) * 384]) for i in range(self.k)]
+		p = ek[384*self.k:384*self.k + 32]
+
+		# Create a k by k matrix
+		a = np.zeros((self.k, self.k), dtype=object)
+		for i in range(self.k):
+			for j in range(self.k):
+				a[i, j] = self.sample_ntt(p + j.to_bytes(1) + i.to_bytes(1))
+		y = []
+		for i in range(self.k):
+			y.append(
+				self.sample_poly_cbd(
+					self.n1,
+					prf(self.n1, r, n)
+				)
+			)
+			n += 1
+		e1 = []
+		for i in range(self.k):
+			e1.append(
+				self.sample_poly_cbd(
+					self.n2,
+					prf(self.n2, r, n)
+				)
+			)
+			n += 1
+
+		e2 = self.sample_poly_cbd(self.n2, prf(self.n2, r, n))
+		y = [self.ntt(yi) for yi in y]
+		# inverse ntt with A transpose times y
+		a_times_y = self.multiply_2d_with_1d(self.k, np.transpose(a), y)
+		u_inv = [self.inv_ntt(a_times_y[i]) for i in range(self.k)]
+		u = [self.add_1d_to_1d(len(e1[0]), u_inv[i], e1[i]) for i in range(len(e1))]
+		mu = self.decompress(1,self.byte_decode(1, m))
+		t_times_y = self.multiply_2d_with_1d(len(u), np.transpose(t), u)
+		v = self.inv_ntt(t_times_y) + e2 + mu
+		c1 = [byte_encode(self.du, self.compress(self.du, u)) for _ in range(self.k)]
+		c2 = [byte_encode(self.dv, self.compress(self.dv, v)) for _ in range(self.k)]	
+		c = b''.join(c1) + b''.join(c2)
+
+		return c
+
 	# Returns a list of 256 integers
 	# b is a 34-byte value
 	def sample_ntt(self, b: bytes) -> list[int]:
@@ -138,6 +185,32 @@ class KPKE:
 		
 		return f
 	
+	def inv_ntt(self, f: list[int]) -> list[int]:
+		f = deepcopy(f)
+		i = 127
+		ln = 2
+		while ln <= 128:
+			start = 0
+			while start < 256:
+				zeta = bit_rev_7[i] % self.q
+				i -= 1
+				for j in range(start, start + ln):
+					t = f[j]
+					f[j] = (t + f[j + ln]) % self.q
+					f[j + ln] = (zeta * (f[j + ln] - t)) % self.q
+				start += 2 * ln
+			ln *= 2
+		f = [(x * 3303) % self.q for x in f]
+		return f
+	
+	def compress(self, d: int, y: list[int]) -> list[int]:
+		# Compute round((2^d / q) * x) % 2^d
+		return [(((1 << d) * x + (self.q//2)) //2) % (1 << d)  for x in y]
+	
+	def decompress(self, d: int, y: list[int]) -> list[int]:
+		# Compute round((q / 2^d) * x) % q
+		return [(self.q * x + (1 << (d-1))) >> d for x in y]
+
 	def multiply_2d_with_1d(self, k: int, a: list[list[list[int]]], b: list[list[int]]) -> list[list[int]]:
 		# a is a k by k matrix, each element being 256 integers
 		# b is a k by 1 vector, each element being 256 integers
@@ -159,6 +232,24 @@ class KPKE:
 			c[i] = (a[i] + b[i]) % self.q
 
 		return c
+	
+	def byte_decode(self, d: int, b: bytes) -> list[int]:
+		barr  = bytes_to_bit_array(b)
+	
+		if d < 12:
+			m = 2**d
+		elif d == 12:
+			m = self.q
+		else:
+			raise Exception(f'Invalid d value {d}')
+
+		f = []
+		f_sum = 0
+		for i in range(256):
+			for j in range(d):
+				f_sum += (barr[i * d + j] * 2**j) % m
+			f.append(f_sum)
+		return f
 
 # The output is a tuple of two 32-byte values
 def g(c: bytes) -> tuple[bytes, bytes]:
