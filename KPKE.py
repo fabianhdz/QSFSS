@@ -253,8 +253,8 @@ class KPKE:
 			raise Exception(f'Invalid d value {d}')
 
 		f = []
-		f_sum = 0
 		for i in range(256):
+			f_sum = 0
 			for j in range(d):
 				f_sum += (barr[i * d + j] * 2**j) % m
 			f.append(f_sum)
@@ -303,9 +303,9 @@ def bit_array_to_bytes(bit_array):
 	return bytes(byte_data)
 
 def byte_encode(d: int, f: list[int]) -> bytes:
+	b = [0] * (256 * d)
 	for i in range(256):
 		a = f[i]
-		b = [0] * (256 * d)
 		for j in range(d):
 			b[i * d + j] = a % 2
 			a = (a - b[i * d + j]) // 2
