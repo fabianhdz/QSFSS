@@ -225,8 +225,8 @@ class KPKE:
 		return c
 	
 	def multiply_1d_with_1d(self, k: int, a: list[list[int]], b: list[list[int]]) -> list[int]:
-	# a is transposed t: list of k vectors, each of length 256
-	# b is y: list of k vectors, each of length 256
+		# a : list of k vectors, each of length 256
+		# b : list of k vectors, each of length 256
 		result = [0] * self.n  # self.n == 256
 		for i in range(k):
 			for j in range(self.n):
