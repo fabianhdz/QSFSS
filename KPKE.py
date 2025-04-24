@@ -117,11 +117,11 @@ class KPKE:
 		u_inv = [self.inv_ntt(a_times_y[i]) for i in range(self.k)]
 		u = [self.add_1d_to_1d(len(e1[0]), u_inv[i], e1[i]) for i in range(len(e1))]
 		mu = self.decompress(1,self.byte_decode(1, m))
-		t_times_y = self.multiply_2d_with_1d(len(u), np.transpose(t), u)
-		v = self.inv_ntt(t_times_y) + e2 + mu
-		c1 = [byte_encode(self.du, self.compress(self.du, u)) for _ in range(self.k)]
-		c2 = [byte_encode(self.dv, self.compress(self.dv, v)) for _ in range(self.k)]	
-		c = b''.join(c1) + b''.join(c2)
+		t_times_y = self.multiply_1d_with_1d(len(u), t, u)
+		v = (self.add_1d_to_1d(len(mu), self.add_1d_to_1d(len(e2), self.inv_ntt(t_times_y),e2), mu)) # v = inv_ntt(t^T * y) + e2 + mu
+		c1 = [byte_encode(self.du, self.compress(self.du, u[i])) for i in range(self.k)]
+		c2 = byte_encode(self.dv, self.compress(self.dv, v))
+		c = b''.join(c1) + c2
 
 		return c
 
@@ -223,6 +223,15 @@ class KPKE:
 				add = self.add_1d_to_1d(self.n, add, times)
 			c.append(add)
 		return c
+	
+	def multiply_1d_with_1d(self, k: int, a: list[list[int]], b: list[list[int]]) -> list[int]:
+	# a is transposed t: list of k vectors, each of length 256
+	# b is y: list of k vectors, each of length 256
+		result = [0] * self.n  # self.n == 256
+		for i in range(k):
+			for j in range(self.n):
+				result[j] = (result[j] + a[i][j] * b[i][j]) % self.q
+		return result
 	
 	def add_1d_to_1d(self, k: int, a: list[int], b: list[int]) -> list[int]:
 		# a is a k by 1 vector
