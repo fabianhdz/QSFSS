@@ -137,7 +137,7 @@ class KPKE:
 			c = xof.read(3)
 			c0, c1, c2 = c[0], c[1], c[2]
 			d1 = (c0 + 256 * (c1 % 16))
-			d2 = c1 // 16 + (16 * (c2 % 16))
+			d2 = (c1 // 16) + (16 * c2)
 			
 			if d1 < self.q:
 				a.append(d1)
