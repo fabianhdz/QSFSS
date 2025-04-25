@@ -125,6 +125,23 @@ class KPKE:
 
 		return c
 
+	def decrypt(self, dk: bytes, c: bytes) -> bytes:
+
+		c1 = c[:32*self.du*self.k]
+		c2 = c[32*self.du*self.k: 32*self.du*self.k + 32* self.dv]
+		u = [self.decompress(self.du, self.byte_decode(self.du, c1[i * 32 * self.du : (i + 1) * 32 * self.du])) for i in range(self.k)]
+		v = self.decompress(self.dv, self.byte_decode(self.dv, c2))
+		s = [self.byte_decode(12, dk[i * 384 : (i + 1) * 384]) for i in range(self.k)]
+		u = [self.ntt(ui) for ui in u]
+		s_times_u = self.multiply_1d_with_1d(len(u), s, u)
+		# w = 𝑣′ − inv_ntt(𝐬⊺ ∘ ntt(𝐮′))
+		inv_ntt_su = self.inv_ntt(s_times_u)
+		neg_inv_ntt_su = [(-x) % self.q for x in inv_ntt_su]
+		w = self.add_1d_to_1d(len(v), v, neg_inv_ntt_su)
+		m = byte_encode(1, self.compress(1, w))
+
+		return m
+
 	# Returns a list of 256 integers
 	# b is a 34-byte value
 	def sample_ntt(self, b: bytes) -> list[int]:
