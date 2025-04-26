@@ -23,6 +23,6 @@ class aesgcm:
     decryptor = cipher.decryptor()
     try:
       plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-      return plaintext.decode()
+      return plaintext
     except InvalidTag:
-      return "Invalid decryption attempt"
+      return None
