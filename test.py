@@ -1,6 +1,7 @@
 import unittest
-from KPKE import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes
+from KPKE import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
 from secrets import token_bytes
+from MLKEM import MLKEM, h
 
 class TestKPKE(unittest.TestCase):
 	def setUp(self):
@@ -60,6 +61,72 @@ class TestKPKE(unittest.TestCase):
 		bit_arr = bytes_to_bit_array(original)
 		reconstructed = bit_array_to_bytes(bit_arr)
 		self.assertEqual(original, reconstructed)
+
+class TestMLKEM(unittest.TestCase):
+	def setUp(self):
+		self.size = 512  
+		self.kem = MLKEM(self.size)
+		self.n, self.q, self.k, self.n1, self.n2, self.du, self.dv = get_param_set(self.size)
+
+	# Seed Consistency Check
+	def test_seed_consistency(self):
+		d = token_bytes(32)
+		z = token_bytes(32)
+		ek1, dk1 = self.kem.key_gen_internal(d, z)
+		ek2, dk2 = self.kem.key_gen_internal(d, z)
+		self.assertEqual(ek1, ek2)
+		self.assertEqual(dk1, dk2)
+
+	# Encapsulation Key Check (Section 7.2)
+	def test_encapsulation_key_check(self):
+		d = token_bytes(32)
+		z = token_bytes(32)
+		ek, dk = self.kem.key_gen_internal(d, z)
+
+		# (Type check)
+		expected_length = 384 * self.k + 32
+		self.assertEqual(len(ek), expected_length)
+
+		# (Modulus check)
+		test = byte_encode(12, self.kem.kpke.byte_decode(12, ek[:384*self.k]))
+		self.assertEqual(test, ek[:384*self.k])
+
+	# Decapsulation Key Check (Section 7.3)
+	def test_decapsulation_key_check(self):
+		d = token_bytes(32)
+		z = token_bytes(32)
+		ek, dk = self.kem.key_gen_internal(d, z)
+
+		# (Ciphertext type check)
+		m = token_bytes(32)
+		_, c = self.kem.encaps_internal(ek, m)
+
+		expected_c_length = 32 * (self.du * self.k + self.dv)
+		self.assertEqual(len(c), expected_c_length)
+
+		# (Decapsulation key type check)
+		expected_dk_length = 768 * self.k + 96
+		self.assertEqual(len(dk), expected_dk_length)
+
+		# (Hash check)
+		ek_pke = dk[384*self.k : 768*self.k + 32]
+		h1 = dk[768*self.k+32 : 768*self.k+64]
+		computed_h = h(ek_pke)
+		self.assertEqual(computed_h, h1)
+
+	# Pair-Wise Consistency Check
+	def test_pairwise_consistency(self):
+		d = token_bytes(32)
+		z = token_bytes(32)
+		ek, dk = self.kem.key_gen_internal(d, z)
+
+		m = token_bytes(32)
+		k1, c = self.kem.encaps_internal(ek, m)
+		k2 = self.kem.decaps_internal(dk, c)
+		print("k1:", k1)
+		print("k2:", k2)
+		# Check if k1 and k2 are equal
+		self.assertEqual(k1, k2)
 
 if __name__ == '__main__':
 	unittest.main()

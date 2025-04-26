@@ -37,7 +37,7 @@ class KPKE:
 		self.n, self.q, self.k, self.n1, self.n2, self.du, self.dv = params
 
 	# d is a 32-byte value
-	def key_gen(self, d: bytes) -> tuple[list[bytes], list[bytes]]:
+	def key_gen(self, d: bytes) -> tuple[bytes, bytes]:
 		p, sigma = g(d + self.k.to_bytes(1))
 		n = 0
 		# Create a k by k matrix
@@ -270,7 +270,7 @@ class KPKE:
 		else:
 			raise Exception(f'Invalid d value {d}')
 
-		f = []
+		f = [] * self.n
 		for i in range(256):
 			f_sum = 0
 			for j in range(d):
