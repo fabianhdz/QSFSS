@@ -117,8 +117,9 @@ class KPKE:
 		u_inv = [self.inv_ntt(a_times_y[i]) for i in range(self.k)]
 		u = [self.add_1d_to_1d(len(e1[0]), u_inv[i], e1[i]) for i in range(len(e1))]
 		mu = self.decompress(1,self.byte_decode(1, m))
-		t_times_y = self.multiply_1d_with_1d(len(u), t, u)
-		v = (self.add_1d_to_1d(len(mu), self.add_1d_to_1d(len(e2), self.inv_ntt(t_times_y),e2), mu)) # v = inv_ntt(t^T * y) + e2 + mu
+		t_times_y = self.multiply_1d_with_1d(len(y), t, y)
+		v_intermediate = self.add_1d_to_1d(len(e2), self.inv_ntt(t_times_y), e2)
+		v = self.add_1d_to_1d(len(mu), v_intermediate, mu)
 		c1 = [byte_encode(self.du, self.compress(self.du, u[i])) for i in range(self.k)]
 		c2 = byte_encode(self.dv, self.compress(self.dv, v))
 		c = b''.join(c1) + c2
@@ -136,7 +137,7 @@ class KPKE:
 		s_times_u = self.multiply_1d_with_1d(len(u), s, u)
 		# w = 𝑣′ − inv_ntt(𝐬⊺ ∘ ntt(𝐮′))
 		inv_ntt_su = self.inv_ntt(s_times_u)
-		neg_inv_ntt_su = [(-x) % self.q for x in inv_ntt_su]
+		neg_inv_ntt_su = [-x for x in inv_ntt_su]
 		w = self.add_1d_to_1d(len(v), v, neg_inv_ntt_su)
 		m = byte_encode(1, self.compress(1, w))
 
@@ -222,11 +223,11 @@ class KPKE:
 	
 	def compress(self, d: int, y: list[int]) -> list[int]:
 		# Compute round((2^d / q) * x) % 2^d
-		return [(((1 << d) * x + (self.q//2)) //2) % (1 << d)  for x in y]
-	
+		return [(((1 << d) * x + (self.q // 2)) // self.q) % (1 << d) for x in y]
+
 	def decompress(self, d: int, y: list[int]) -> list[int]:
 		# Compute round((q / 2^d) * x) % q
-		return [(self.q * x + (1 << (d-1))) >> d for x in y]
+		return [((self.q * x + (1 << (d - 1))) // (1 << d)) % self.q for x in y]
 
 	def multiply_2d_with_1d(self, k: int, a: list[list[list[int]]], b: list[list[int]]) -> list[list[int]]:
 		# a is a k by k matrix, each element being 256 integers
