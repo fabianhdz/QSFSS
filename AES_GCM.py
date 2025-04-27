@@ -5,7 +5,6 @@ import os
 
 class AESGCM:
   def __init__(self, key):
-    print(len(key))
     self.key = key[:32]
 
   def changekey(self, key):
