@@ -2,6 +2,7 @@ import unittest
 from KPKE import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
 from secrets import token_bytes
 from MLKEM import MLKEM, h
+from AES_GCM import aesgcm
 
 class TestKPKE(unittest.TestCase):
 	def setUp(self):
@@ -127,6 +128,62 @@ class TestMLKEM(unittest.TestCase):
 		print("k2:", k2)
 		# Check if k1 and k2 are equal
 		self.assertEqual(k1, k2)
+
+class TESTAESGCM(unittest.TestCase):
+	def setUp(self):
+		kem = MLKEM(512)
+		ek, dk  = kem.key_gen()
+		k_shared_encaps, c = kem.encaps(ek)
+		k_shared_decaps = kem.decaps(dk, c)
+
+		assert k_shared_encaps == k_shared_decaps, "Shared keys do not match!"
+
+		self.shared_key = k_shared_encaps
+		self.aes = aesgcm(self.shared_key)
+
+	def test_encrypt_decrypt(self):
+		message = b"Hello, Medha!"
+		iv, ciphertext, tag = self.aes.encrypt(message)
+		decrypted_message = self.aes.decrypt(iv, ciphertext, tag)
+		self.assertEqual(message, decrypted_message)
+		print(f"Decrypted Message: {decrypted_message}")
+
+	def test_invalid_tag(self):
+		message = b"Hello, Medha!"
+		iv, ciphertext, tag = self.aes.encrypt(message)
+		tag = bytearray(tag)
+		tag[0] ^= 1  # Modify the tag to make it invalid
+		decrypted_message = self.aes.decrypt(iv, ciphertext, bytes(tag))
+		print(f"Decrypted Message with invalid tag: {decrypted_message}")
+		self.assertIsNone(decrypted_message)
+
+	def test_wrong_shared_key_decryption(self):
+			kem = MLKEM(512)
+
+			# Alice generates public and private key
+			ek, dk = kem.key_gen()
+			# Alice encapsulates using ek
+			k_alice, ciphertext = kem.encaps(ek)
+			# Bob decapsulates using dk
+			k_bob = kem.decaps(dk, ciphertext)
+			# normally k_alice == k_bob
+			self.assertEqual(k_alice, k_bob)
+
+			# Setup AES-GCM with correct key (Alice side)
+			aes_alice = aesgcm(k_alice)
+
+			# Encrypt a message
+			message = b"This is a secret between Alice and Bob."
+			iv, ciphertext_aes, tag = aes_alice.encrypt(message)
+
+			# Bob tries to decrypt with a WRONG key
+			wrong_key = token_bytes(32)  
+			aes_bob_wrong = aesgcm(wrong_key)
+
+			decrypted_message = aes_bob_wrong.decrypt(iv, ciphertext_aes, tag)
+
+			# Since key is wrong, AES-GCM must fail authentication
+			self.assertEqual(decrypted_message, None)
 
 if __name__ == '__main__':
 	unittest.main()
