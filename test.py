@@ -158,32 +158,32 @@ class TESTAESGCM(unittest.TestCase):
 		self.assertIsNone(decrypted_message)
 
 	def test_wrong_shared_key_decryption(self):
-			kem = MLKEM(512)
+		kem = MLKEM(512)
 
-			# Alice generates public and private key
-			ek, dk = kem.key_gen()
-			# Alice encapsulates using ek
-			k_alice, ciphertext = kem.encaps(ek)
-			# Bob decapsulates using dk
-			k_bob = kem.decaps(dk, ciphertext)
-			# normally k_alice == k_bob
-			self.assertEqual(k_alice, k_bob)
+		# Alice generates public and private key
+		ek, dk = kem.key_gen()
+		# Alice encapsulates using ek
+		k_alice, ciphertext = kem.encaps(ek)
+		# Bob decapsulates using dk
+		k_bob = kem.decaps(dk, ciphertext)
+		# normally k_alice == k_bob
+		self.assertEqual(k_alice, k_bob)
 
-			# Setup AES-GCM with correct key (Alice side)
-			aes_alice = aesgcm(k_alice)
+		# Setup AES-GCM with correct key (Alice side)
+		aes_alice = aesgcm(k_alice)
 
-			# Encrypt a message
-			message = b"This is a secret between Alice and Bob."
-			iv, ciphertext_aes, tag = aes_alice.encrypt(message)
+		# Encrypt a message
+		message = b"This is a secret between Alice and Bob."
+		iv, ciphertext_aes, tag = aes_alice.encrypt(message)
 
-			# Bob tries to decrypt with a WRONG key
-			wrong_key = token_bytes(32)  
-			aes_bob_wrong = aesgcm(wrong_key)
+		# Bob tries to decrypt with a WRONG key
+		wrong_key = token_bytes(32)  
+		aes_bob_wrong = aesgcm(wrong_key)
 
-			decrypted_message = aes_bob_wrong.decrypt(iv, ciphertext_aes, tag)
+		decrypted_message = aes_bob_wrong.decrypt(iv, ciphertext_aes, tag)
 
-			# Since key is wrong, AES-GCM must fail authentication
-			self.assertEqual(decrypted_message, None)
+		# Since key is wrong, AES-GCM must fail authentication
+		self.assertEqual(decrypted_message, None)
 
 if __name__ == '__main__':
 	unittest.main()
