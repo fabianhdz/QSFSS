@@ -1,8 +1,8 @@
 import unittest
-from KPKE import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
+from kpke import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
 from secrets import token_bytes
-from MLKEM import MLKEM, h
-from AES_GCM import aesgcm
+from mlkem import MLKEM, h
+from aes_gcm import AESGCM
 
 class TestKPKE(unittest.TestCase):
 	def setUp(self):
@@ -137,7 +137,7 @@ class TESTAESGCM(unittest.TestCase):
 		assert k_shared_encaps == k_shared_decaps, "Shared keys do not match!"
 
 		self.shared_key = k_shared_encaps
-		self.aes = aesgcm(self.shared_key)
+		self.aes = AESGCM(self.shared_key)
 
 	def test_encrypt_decrypt(self):
 		message = b"Hello, Medha!"
@@ -167,7 +167,7 @@ class TESTAESGCM(unittest.TestCase):
 		self.assertEqual(k_alice, k_bob)
 
 		# Setup AES-GCM with correct key (Alice side)
-		aes_alice = aesgcm(k_alice)
+		aes_alice = AESGCM(k_alice)
 
 		# Encrypt a message
 		message = b"This is a secret between Alice and Bob."
@@ -175,7 +175,7 @@ class TESTAESGCM(unittest.TestCase):
 
 		# Bob tries to decrypt with a WRONG key
 		wrong_key = token_bytes(32)  
-		aes_bob_wrong = aesgcm(wrong_key)
+		aes_bob_wrong = AESGCM(wrong_key)
 
 		decrypted_message = aes_bob_wrong.decrypt(c)
 
