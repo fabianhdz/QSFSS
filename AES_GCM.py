@@ -16,9 +16,12 @@ class aesgcm:
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(data) + encryptor.finalize()
     tag = encryptor.tag
-    return iv, ciphertext, tag
+    return iv + tag + ciphertext
 
-  def decrypt(self, iv, ciphertext, tag,):
+  def decrypt(self, iv_tag_ciphertext):
+    iv = iv_tag_ciphertext[:12]
+    tag = iv_tag_ciphertext[12:28]
+    ciphertext = iv_tag_ciphertext[28:]
     cipher = Cipher(algorithms.AES(self.key), modes.GCM(iv, tag), backend=default_backend())
     decryptor = cipher.decryptor()
     try:

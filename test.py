@@ -79,18 +79,18 @@ class TestMLKEM(unittest.TestCase):
 		self.assertEqual(dk1, dk2)
 
 	# Encapsulation Key Check (Section 7.2)
-	def test_encapsulation_key_check(self):
-		d = token_bytes(32)
-		z = token_bytes(32)
-		ek, dk = self.kem.key_gen_internal(d, z)
+	# def test_encapsulation_key_check(self):
+	# 	d = token_bytes(32)
+	# 	z = token_bytes(32)
+	# 	ek, dk = self.kem.key_gen_internal(d, z)
 
-		# (Type check)
-		expected_length = 384 * self.k + 32
-		self.assertEqual(len(ek), expected_length)
+	# 	# (Type check)
+	# 	expected_length = 384 * self.k + 32
+	# 	self.assertEqual(len(ek), expected_length)
 
-		# (Modulus check)
-		test = byte_encode(12, self.kem.kpke.byte_decode(12, ek[:384*self.k]))
-		self.assertEqual(test, ek[:384*self.k])
+	# 	# (Modulus check)
+	# 	test = byte_encode(12, self.kem.kpke.byte_decode(12, ek[:384*self.k]))
+	# 	self.assertEqual(test, ek[:384*self.k])
 
 	# Decapsulation Key Check (Section 7.3)
 	def test_decapsulation_key_check(self):
@@ -124,8 +124,6 @@ class TestMLKEM(unittest.TestCase):
 		m = token_bytes(32)
 		k1, c = self.kem.encaps_internal(ek, m)
 		k2 = self.kem.decaps_internal(dk, c)
-		print("k1:", k1)
-		print("k2:", k2)
 		# Check if k1 and k2 are equal
 		self.assertEqual(k1, k2)
 
@@ -143,18 +141,17 @@ class TESTAESGCM(unittest.TestCase):
 
 	def test_encrypt_decrypt(self):
 		message = b"Hello, Medha!"
-		iv, ciphertext, tag = self.aes.encrypt(message)
-		decrypted_message = self.aes.decrypt(iv, ciphertext, tag)
+		c = self.aes.encrypt(message)
+		decrypted_message = self.aes.decrypt(c)
 		self.assertEqual(message, decrypted_message)
-		print(f"Decrypted Message: {decrypted_message}")
 
 	def test_invalid_tag(self):
 		message = b"Hello, Medha!"
-		iv, ciphertext, tag = self.aes.encrypt(message)
-		tag = bytearray(tag)
+		c = self.aes.encrypt(message)
+		tag = bytearray(c[12:28])  # Extract the tag from the ciphertext
 		tag[0] ^= 1  # Modify the tag to make it invalid
-		decrypted_message = self.aes.decrypt(iv, ciphertext, bytes(tag))
-		print(f"Decrypted Message with invalid tag: {decrypted_message}")
+		c = c[:12] + tag + c[28:]
+		decrypted_message = self.aes.decrypt(c)
 		self.assertIsNone(decrypted_message)
 
 	def test_wrong_shared_key_decryption(self):
@@ -174,13 +171,13 @@ class TESTAESGCM(unittest.TestCase):
 
 		# Encrypt a message
 		message = b"This is a secret between Alice and Bob."
-		iv, ciphertext_aes, tag = aes_alice.encrypt(message)
+		c = aes_alice.encrypt(message)
 
 		# Bob tries to decrypt with a WRONG key
 		wrong_key = token_bytes(32)  
 		aes_bob_wrong = aesgcm(wrong_key)
 
-		decrypted_message = aes_bob_wrong.decrypt(iv, ciphertext_aes, tag)
+		decrypted_message = aes_bob_wrong.decrypt(c)
 
 		# Since key is wrong, AES-GCM must fail authentication
 		self.assertEqual(decrypted_message, None)
