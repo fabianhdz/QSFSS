@@ -9,7 +9,7 @@ import os
 root = TkinterDnD.Tk()
 root.title("File Encryption and Decryption")
 root.geometry("600x600")
-create_file_acceptor(root)
+create_file_acceptor(root, "Drag a file here", lambda x: messagebox.showinfo("Success!", f"File received: {x}"))
 # Add encryption and decryption buttons next to each other
 def encrypt_file():
     messagebox.showinfo("Encrypt", "File Encrypted!")
@@ -19,15 +19,4 @@ encrypt_button = ttk.Button(root, text="Encrypt", command=encrypt_file)
 encrypt_button.pack(side=tk.LEFT, padx=90)
 decrypt_button = ttk.Button(root, text="Decrypt", command=decrypt_file)
 decrypt_button.pack(side=tk.RIGHT, padx=90)
-#Upon selecting a file, show it under the Browse button
-def show_file_path(file_path):
-    file_label = ttk.Label(root, text=f"Selected File: {file_path}")
-    file_label.pack(pady=10)
-    file_label.config(font=("Arial", 15))
-
-# Add a label to show the selected file path
-file_label = ttk.Label(root, text="")
-file_label.pack(pady=10)
-file_label.config(font=("Arial", 15))
-# Run the main loop
 root.mainloop()
