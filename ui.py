@@ -2,10 +2,12 @@ from tkinter import ttk, messagebox
 import tkinter as tk
 from tkinterdnd2 import DND_FILES
 from MLKEM import MLKEM
+import os
+from AES_GCM import AESGCM
 
 mlkem = MLKEM(512)
 
-def save_file(data, file_name, file_type):
+def save_file(data, file_name, file_type=("All files", "*.*")):
     file_path = tk.filedialog.asksaveasfilename(initialfile=file_name, filetypes=[file_type])
     if file_path:
         with open(file_path, 'wb') as f:
@@ -156,6 +158,90 @@ def create_shared_key_tab(tab):
     
     radio_encaps.pack(pady=2)
     radio_decaps.pack(pady=2)
+    file_frame.pack()
+    download_button.pack(pady=2)
+    
+def create_enc_dec_tab(tab):
+    files = {}
+    type = tk.StringVar()
+    type.set("encrypt")
+    
+    radio_encrypt = ttk.Radiobutton(tab, text="Encrypt", variable=type, value="encrypt")
+    radio_decrypt = ttk.Radiobutton(tab, text="Decrypt", variable=type, value="decrypt")
+    download_button = ttk.Button(tab, text="Download Encrypted File", state=tk.DISABLED)
+    
+    def shared_key_receiver(file_path):
+        with open(file_path, 'rb') as f:
+            files['shared_key'] = f.read()
+            
+        if type.get() == "encrypt" and 'plain' in files or type.get() == "decrypt" and 'encrypted' in files:
+            download_button.config(state=tk.NORMAL)
+            
+    def plain_receiver(file_path):
+        files['plain_filename'] = os.path.basename(file_path)
+        with open(file_path, 'rb') as f:
+            files['plain'] = f.read()
+            
+        if type.get() == "encrypt" and 'shared_key' in files:
+            download_button.config(state=tk.NORMAL)
+            
+    def encrypted_receiver(file_path):
+        files['encrypted_filename'] = os.path.basename(file_path)
+        with open(file_path, 'rb') as f:
+            files['encrypted'] = f.read()
+            
+        if type.get() == "decrypt" and 'shared_key' in files:
+            download_button.config(state=tk.NORMAL)
+            
+    file_frame = ttk.Frame(tab)
+    file_shared_key = create_file_acceptor(file_frame, "Drag Shared Key here", shared_key_receiver, ("Key files", "*.key"))
+    file_plain = create_file_acceptor(file_frame, "Drag File here", plain_receiver)
+    file_encrypted = create_file_acceptor(file_frame, "Drag Encrypted File here", encrypted_receiver, ("Binary files", "*.bin"))
+    file_shared_key.pack(pady=2)
+    file_plain.pack(pady=2)
+    
+    def on_type_change():
+        if type.get() == "encrypt":
+            file_plain.pack(pady=2)
+            file_encrypted.pack_forget()
+            download_button.config(text="Download Encrypted File")
+            if "shared_key" in files and 'plain' in files:
+                download_button.config(state=tk.NORMAL)
+            else:
+                download_button.config(state=tk.DISABLED)
+        else:
+            file_plain.pack_forget()
+            file_encrypted.pack(pady=2)
+            download_button.config(text="Download Decrypted File")
+            if "shared_key" in files and 'encrypted' in files:
+                download_button.config(state=tk.NORMAL)
+            else:
+                download_button.config(state=tk.DISABLED)
+                
+    def encrypt_decrypt_file():
+        if type.get() == "encrypt" and 'shared_key' in files and 'plain' in files and 'plain_filename' in files:
+            aes = AESGCM(files['shared_key'])
+            encrypted_data = aes.encrypt(files['plain'])
+            filename = files['plain_filename']+".encrypted.bin"
+            save_file(encrypted_data, filename, ("Binary files", "*.bin"))
+        elif type.get() == "decrypt" and 'shared_key' in files and 'encrypted' in files and 'encrypted_filename' in files:
+            aes = AESGCM(files['shared_key'])
+            decrypted_data = aes.decrypt(files['encrypted'])
+            if decrypted_data is None:
+                messagebox.showerror("Error", "Decryption failed. Invalid key or ciphertext.")
+                return
+            filename = files['encrypted_filename'].replace(".encrypted.bin", "")
+            save_file(decrypted_data, filename)
+        else:
+            messagebox.showerror("Error", "No file to encrypt/decrypt.")
+    
+    download_button.config(command=encrypt_decrypt_file)
+            
+    radio_encrypt.config(command=on_type_change)
+    radio_decrypt.config(command=on_type_change)
+    
+    radio_encrypt.pack(pady=2)
+    radio_decrypt.pack(pady=2)
     file_frame.pack()
     download_button.pack(pady=2)
     

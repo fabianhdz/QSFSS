@@ -3,8 +3,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.exceptions import InvalidTag
 import os
 
-class aesgcm:
+class AESGCM:
   def __init__(self, key):
+    print(len(key))
     self.key = key[:32]
 
   def changekey(self, key):

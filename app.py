@@ -22,6 +22,7 @@ tabs.pack(expand=1, fill="both")
 
 create_keygen_tab(tab_keygen)
 create_shared_key_tab(tab_sharedkey)
+create_enc_dec_tab(tab_enc_dec)
 
 # create_file_acceptor(root, "Drag a file here", lambda x: messagebox.showinfo("Success!", f"File received: {x}"))
 # def encrypt_file():
