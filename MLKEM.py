@@ -1,4 +1,4 @@
-from KPKE import KPKE, get_param_set, g
+from kpke import KPKE, get_param_set, g
 from hashlib import sha3_256
 from Crypto.Hash import SHAKE256
 from secrets import token_bytes

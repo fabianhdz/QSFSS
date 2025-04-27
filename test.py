@@ -1,8 +1,8 @@
 import unittest
-from KPKE import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
+from kpke import KPKE, g, prf, get_param_set, bytes_to_bit_array, bit_array_to_bytes, byte_encode
 from secrets import token_bytes
-from MLKEM import MLKEM, h
-from AES_GCM import AESGCM
+from mlkem import MLKEM, h
+from aes_gcm import AESGCM
 
 class TestKPKE(unittest.TestCase):
 	def setUp(self):

@@ -1,9 +1,9 @@
 from tkinter import ttk, messagebox
 import tkinter as tk
 from tkinterdnd2 import DND_FILES
-from MLKEM import MLKEM
+from mlkem import MLKEM
 import os
-from AES_GCM import AESGCM
+from aes_gcm import AESGCM
 
 mlkem = MLKEM(512)
 
