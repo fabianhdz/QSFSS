@@ -4,7 +4,7 @@ from tkinterdnd2 import TkinterDnD
 from ui import *
 
 root = TkinterDnD.Tk()
-root.title("File Encryption and Decryption")
+root.title("Quantum Secure File Encryption System")
 
 tabs = ttk.Notebook(root)
 tab_keygen = ttk.Frame(tabs)
